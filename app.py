@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -250,7 +249,7 @@ with tab5:
         • Spot Trigger: Buy above ₹6,010  
         • Option Entry: ₹145 - ₹150 | SL: ₹110 (-25 pts)  
         • Targets: T1: ₹195 | T2: ₹240  
-        • **🛡️ Verdict:** 🟢 STAY IN THIS TRADE (Holding above ₹6,010)
+        • **🛡️ Verdict:** 🟢 STAY IN TRADE (Holding above ₹6,010)
         """)
     with col_n:
         st.warning("""
@@ -333,4 +332,3 @@ if st.button("Save Telegram Settings"):
     st.session_state['tg_token'] = tg_token
     st.session_state['tg_cid'] = tg_cid
     st.success("Settings saved!")
-
