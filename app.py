@@ -23,63 +23,11 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# HIGH-CONTRAST DARK THEME (100% BRIGHT CRISP WHITE TEXT)
-# -------------------------------------------------------------
-st.markdown("""
-<style>
-    .stApp, .main, [data-testid="stAppViewContainer"] {
-        background-color: #0b0e14 !important;
-        color: #f8fafc !important;
-    }
-    p, span, div, label, li, table, td, th {
-        color: #f1f5f9 !important;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        color: #ffffff !important;
-        font-weight: 700 !important;
-    }
-    [data-testid="stMetric"] {
-        background-color: #151b28 !important;
-        border: 1px solid #2e3b52 !important;
-        border-radius: 10px !important;
-        padding: 12px 14px !important;
-    }
-    [data-testid="stMetricValue"] {
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        font-size: 24px !important;
-    }
-    [data-testid="stMetricLabel"] {
-        color: #94a3b8 !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-    }
-    .strategy-card {
-        background: linear-gradient(135deg, #151d2a 0%, #0e141f 100%) !important;
-        border: 2px solid #2979ff !important;
-        border-radius: 12px !important;
-        padding: 18px !important;
-        margin: 14px 0 !important;
-    }
-    .verdict-card {
-        background-color: #131d2e !important;
-        border: 1.5px solid #00e676 !important;
-        border-radius: 10px !important;
-        padding: 14px 16px !important;
-        margin: 12px 0 !important;
-    }
-    .verdict-card p, .verdict-card div, .verdict-card b {
-        color: #f8fafc !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------------------------------------------
 # DIRECT EXCHANGE LIVE TICK SCRAPER
 # -------------------------------------------------------------
 def fetch_live_price_google(ticker_code, fallback):
     url = f"https://www.google.com/finance/quote/{ticker_code}"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     try:
         res = requests.get(url, headers=headers, timeout=2.0)
         if res.status_code == 200:
@@ -160,8 +108,8 @@ def evaluate_user_strategy(index_name, spot_price, vix_val, strike_step, delta_t
     spot_sl_pts = 50.0 if index_name == "NIFTY" else 150.0
     
     delta = delta_target
-    prem_target_pts = round(spot_target_pts * delta, 1)  # ~8.0 pts
-    prem_sl_pts = round(spot_sl_pts * delta, 1)          # ~10.0 pts
+    prem_target_pts = round(spot_target_pts * delta, 1)
+    prem_sl_pts = round(spot_sl_pts * delta, 1)
     
     live_prem_est = round(expected_move * 0.22, 1)
     
@@ -197,9 +145,9 @@ def evaluate_user_strategy(index_name, spot_price, vix_val, strike_step, delta_t
 # -------------------------------------------------------------
 col_h1, col_h2 = st.columns([3, 1])
 with col_h1:
-    st.title("🎯 Nifty & Sensex Scalper Pro (Exact User Strategy)")
+    st.title("🎯 Nifty & Sensex Scalper Pro (Exact Strategy)")
     now_str = datetime.datetime.now().strftime("%H:%M:%S")
-    st.caption(f"15m VWAP+9EMA Trend | 5m RSI (60/40) Trigger | 0.2 Delta Next Weekly | Last Scan: {now_str}")
+    st.caption("15m VWAP+9EMA Trend | 5m RSI (60/40) Trigger | 0.2 Delta Next Weekly | Auto-Refreshed: " + now_str)
 with col_h2:
     st.write("")
     if st.button("🔄 Force Rescan", use_container_width=True):
@@ -212,11 +160,11 @@ if "sl_count" not in st.session_state:
 
 is_trading_locked = st.session_state["sl_count"] >= 2
 if is_trading_locked:
-    st.error("⛔ **DIN MEIN 2 SL HIT HO CHUKE HAIN:** Strategy Rule ke mutabiq aaj ke liye trading strictly band hai!")
+    st.error("⛔ DIN MEIN 2 SL HIT HO CHUKE HAIN: Strategy Rule ke mutabiq aaj ke liye trading strictly band hai!")
 
 today = datetime.date.today()
 if today.weekday() in [5, 6]:
-    st.warning("🏖️ **WEEKEND NOTICE:** Aaj market band hai. Monday 9:30 AM par live ticks shuru honge. (Latest closing structure displayed).")
+    st.warning("🏖️ WEEKEND NOTICE: Aaj market band hai. Monday 9:30 AM par live ticks shuru honge. (Latest closing structure displayed).")
 
 # -------------------------------------------------------------
 # CALCULATE SIGNALS FOR NIFTY & SENSEX
@@ -231,72 +179,107 @@ tab_nifty, tab_sensex, tab_rules = st.tabs([
 ])
 
 # -------------------------------------------------------------
-# TAB 1: NIFTY 50 SIGNAL CARD
+# TAB 1: NIFTY 50 SIGNAL CARD (100% CLEAN PYTHON - NO F-STRINGS)
 # -------------------------------------------------------------
 with tab_nifty:
     nr = nifty_res
-    st.subheader(f"NIFTY 50 Live Spot: ₹{nr['spot']}")
+    st.subheader("NIFTY 50 Live Spot: ₹" + str(nr['spot']))
     
+    # Verification Checklist Metrics
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("15-Min Trend", "BULLISH (Above VWAP & 9EMA)" if nr['signal_type'] == 'CE' else ("BEARISH" if nr['signal_type'] == 'PE' else "CHOP"))
-    c2.metric("5-Min RSI (14)", f"{nr['rsi']} (>60 Bullish)" if nr['rsi'] > 60 else f"{nr['rsi']}")
-    c3.metric("Contract Cycle", f"{nr['contract_type']} (DTE={nr['dte']})")
+    trend_txt = "BULLISH (Above VWAP & 9EMA)" if nr['signal_type'] == 'CE' else ("BEARISH" if nr['signal_type'] == 'PE' else "CHOP")
+    c1.metric("15-Min Trend", trend_txt)
+    c2.metric("5-Min RSI (14)", str(nr['rsi']) + " (>60 Bullish)" if nr['rsi'] > 60 else str(nr['rsi']))
+    c3.metric("Contract Cycle", str(nr['contract_type']) + " (DTE=" + str(nr['dte']) + ")")
     c4.metric("Time Window", "ACTIVE (9:30 AM - 2:00 PM)" if nr['is_time_valid'] else "CLOSED (Outside Window)")
     
+    # Signal Container
     if not is_trading_locked:
         if nr['signal_type'] == 'CE':
-            st.markdown(f"""
-            <div class="strategy-card" style="border-color:#00e676;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="background:#00c853; color:#000; font-weight:800; padding:5px 12px; border-radius:6px; font-size:13px;">🟢 ENTER NOW: NIFTY {nr['selected_strike']} CE</span>
-                    <span style="color:#94a3b8; font-size:12px;">0.2 Delta OTM | {nr['contract_type']}</span>
-                </div>
-                
-                <h2 style="margin:12px 0; color:#fff;">Live Option Premium: ₹{nr['live_prem']}</h2>
-                
-                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; background:rgba(0,0,0,0.35); padding:14px; border-radius:8px; margin:12px 0;">
-                    <div><span style="color:#94a3b8; font-size:12px;">TARGET (+{nr['prem_target_pts']} pts in Premium):</span><br><b style="font-size:18px; color:#00e676;">₹{nr['target_prem']}</b> (Spot Target: +{nr['spot_target_pts']} pts)</div>
-                    <div><span style="color:#94a3b8; font-size:12px;">STOP-LOSS (-{nr['actual_sl_pts']} pts in Premium):</span><br><b style="font-size:18px; color:#ff5252;">₹{nr['sl_prem']}</b> (Spot SL: -{nr['spot_sl_pts']} pts, max 28% cap)</div>
-                </div>
-                
-                <div class="verdict-card">
-                    <b style="color:#00e676;">🛡️ ACTIVE VERDICT: STAY IN THIS TRADE</b><br>
-                    • 15-min spot (₹{nr['spot']}) is holding cleanly above VWAP (₹{nr['vwap']}) and 9-EMA (₹{nr['ema9']}).<br>
-                    • 5-min RSI is {nr['rsi']} (>60 breakout confirmed). Hold until ₹{nr['target_prem']} target!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.success("🟢 ACTION: ENTER NOW | NIFTY " + str(nr['selected_strike']) + " CE (0.2 Delta OTM | " + str(nr['contract_type']) + ")")
+            
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Live Premium", "₹" + str(nr['live_prem']))
+            m2.metric("TARGET (+" + str(nr['prem_target_pts']) + " pts)", "₹" + str(nr['target_prem']))
+            m3.metric("STOP-LOSS (-" + str(nr['actual_sl_pts']) + " pts)", "₹" + str(nr['sl_prem']))
+            m4.metric("Spot Target / SL", "+" + str(nr['spot_target_pts']) + " / -" + str(nr['spot_sl_pts']))
+            
+            st.info("🛡️ ACTIVE VERDICT: STAY IN THIS TRADE\n\n" +
+                    "• 15-min spot (₹" + str(nr['spot']) + ") is holding cleanly above VWAP (₹" + str(nr['vwap']) + ") and 9-EMA (₹" + str(nr['ema9']) + ").\n" +
+                    "• 5-min RSI is " + str(nr['rsi']) + " (>60 breakout confirmed). Hold until ₹" + str(nr['target_prem']) + " target!\n" +
+                    "• Rule: Target 1 par 75% profit book karein aur SL Cost (₹" + str(nr['live_prem']) + ") par shift karein!")
             
         elif nr['signal_type'] == 'PE':
-            st.markdown(f"""
-            <div class="strategy-card" style="border-color:#ff5252;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="background:#ff5252; color:#fff; font-weight:800; padding:5px 12px; border-radius:6px; font-size:13px;">🔴 ENTER NOW: NIFTY {nr['selected_strike']} PE</span>
-                    <span style="color:#94a3b8; font-size:12px;">0.2 Delta OTM | {nr['contract_type']}</span>
-                </div>
-                <h2 style="margin:12px 0; color:#fff;">Live Option Premium: ₹{nr['live_prem']}</h2>
-                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; background:rgba(0,0,0,0.35); padding:14px; border-radius:8px; margin:12px 0;">
-                    <div><span style="color:#94a3b8; font-size:12px;">TARGET (+{nr['prem_target_pts']} pts):</span><br><b style="font-size:18px; color:#00e676;">₹{nr['target_prem']}</b></div>
-                    <div><span style="color:#94a3b8; font-size:12px;">STOP-LOSS (-{nr['actual_sl_pts']} pts):</span><br><b style="font-size:18px; color:#ff5252;">₹{nr['sl_prem']}</b> (Max 28% cap)</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.error("🔴 ACTION: ENTER NOW | NIFTY " + str(nr['selected_strike']) + " PE (0.2 Delta OTM)")
+            
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Live Premium", "₹" + str(nr['live_prem']))
+            m2.metric("TARGET (+" + str(nr['prem_target_pts']) + " pts)", "₹" + str(nr['target_prem']))
+            m3.metric("STOP-LOSS (-" + str(nr['actual_sl_pts']) + " pts)", "₹" + str(nr['sl_prem']))
+            m4.metric("Spot Target / SL", "+" + str(nr['spot_target_pts']) + " / -" + str(nr['spot_sl_pts']))
+            
+            st.info("🛡️ ACTIVE VERDICT: STAY IN PE TRADE (Holding below VWAP & 9-EMA)")
         else:
-            st.info("🟡 **WAIT FOR CONFIRMATION:** 15-min VWAP/9EMA alignment ya 5-min RSI (60/40) cross ka wait karein.")
+            st.info("🟡 WAIT FOR CONFIRMATION: 15-min VWAP/9EMA alignment ya 5-min RSI (60/40) cross ka wait karein.")
 
 # -------------------------------------------------------------
-# TAB 2: BSE SENSEX SIGNAL CARD
+# TAB 2: BSE SENSEX SIGNAL CARD (100% CLEAN PYTHON)
 # -------------------------------------------------------------
 with tab_sensex:
     sr = sensex_res
-    st.subheader(f"BSE SENSEX Live Spot: ₹{sr['spot']}")
+    st.subheader("BSE SENSEX Live Spot: ₹" + str(sr['spot']))
     
     sc1, sc2, sc3, sc4 = st.columns(4)
     sc1.metric("15-Min Trend", "BULLISH" if sr['signal_type'] == 'CE' else "BEARISH")
-    sc2.metric("5-Min RSI (14)", f"{sr['rsi']}")
-    sc3.metric("Contract Cycle", f"{sr['contract_type']} (DTE={sr['dte']})")
+    sc2.metric("5-Min RSI (14)", str(sr['rsi']))
+    sc3.metric("Contract Cycle", str(sr['contract_type']) + " (DTE=" + str(sr['dte']) + ")")
     sc4.metric("Time Window", "ACTIVE" if sr['is_time_valid'] else "CLOSED")
     
     if not is_trading_locked and sr['signal_type'] != "NONE":
-        st.markdown(f"""
-        <div class="
+        st.success("🟢 ENTER SENSEX " + str(sr['selected_strike']) + " " + str(sr['signal_type']) + " (0.2 Delta OTM | " + str(sr['contract_type']) + ")")
+        
+        sm1, sm2, sm3, sm4 = st.columns(4)
+        sm1.metric("Live Premium", "₹" + str(sr['live_prem']))
+        sm2.metric("TARGET (+" + str(sr['prem_target_pts']) + " pts)", "₹" + str(sr['target_prem']))
+        sm3.metric("STOP-LOSS (-" + str(sr['actual_sl_pts']) + " pts)", "₹" + str(sr['sl_prem']))
+        sm4.metric("Spot Target / SL", "+" + str(sr['spot_target_pts']) + " / -" + str(sr['spot_sl_pts']))
+        
+        st.info("🛡️ ACTIVE VERDICT: STAY IN THIS TRADE | Hold until Target!")
+
+# -------------------------------------------------------------
+# TAB 3: STRATEGY RULES & SL TRACKER
+# -------------------------------------------------------------
+with tab_rules:
+    st.subheader("📜 Aapki Strategy Ke Fixed Rules")
+    st.markdown("""
+    1. **15-Min Spot Filter:**
+       * Price VWAP aur 9-EMA dono ke upar ho -> **Sirf CE**.
+       * Price VWAP aur 9-EMA dono ke neeche ho -> **Sirf PE**.
+    2. **5-Min Spot Trigger:**
+       * RSI > 60 cross kare -> **CE Trigger**.
+       * RSI < 40 cross kare -> **PE Trigger** (trend ke sath hi).
+    3. **Time Window:**
+       * **9:30 AM se 2:00 PM** ke beech me hi entry allow hai.
+    4. **Contract Selection:**
+       * **Next Weekly Contract (DTE >= 3)**, 0.2 Delta OTM.
+       * Expiry day aur DTE 0-1 strictly skip.
+    5. **Option Target & SL Math:**
+       * Spot Target = 40 pts -> Option Target = 40 x Delta = +8 premium pts.
+       * Spot SL = 50 pts -> Option SL = 50 x Delta = -10 premium pts.
+       * Premium SL **28% se zyada na ho**.
+    6. **Daily Discipline:**
+       * Din mein **Max 2 SL**, uske baad trading strictly band!
+    """)
+    
+    st.markdown("---")
+    st.subheader("🛡️ Daily SL Tracker (Max 2 SL)")
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        st.metric("Aaj Kitne SL Hit Hue?", str(st.session_state['sl_count']) + " / 2")
+    with col_t2:
+        if st.button("🔴 Record SL Hit (+1)", use_container_width=True):
+            st.session_state['sl_count'] += 1
+            st.rerun()
+        if st.button("🔄 Reset Daily SL Counter", use_container_width=True):
+            st.session_state['sl_count'] = 0
+            st.rerun()
