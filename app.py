@@ -54,23 +54,6 @@ st.markdown("""
         font-weight: 600 !important;
         font-size: 13px !important;
     }
-    .strategy-card {
-        background: linear-gradient(135deg, #151d2a 0%, #0e141f 100%) !important;
-        border: 2px solid #2979ff !important;
-        border-radius: 12px !important;
-        padding: 16px 18px !important;
-        margin: 14px 0 !important;
-    }
-    .verdict-card {
-        background-color: #131d2e !important;
-        border: 1.5px solid #00e676 !important;
-        border-radius: 10px !important;
-        padding: 14px 16px !important;
-        margin: 12px 0 !important;
-    }
-    .verdict-card p, .verdict-card div, .verdict-card b {
-        color: #f8fafc !important;
-    }
     input, select {
         background-color: #151b28 !important;
         color: #ffffff !important;
@@ -181,8 +164,10 @@ def evaluate_user_strategy(index_name, spot_price, vix_val, strike_step, delta_t
     now_time = now.time()
     today = datetime.date.today()
     
+    # 1. Time Window Rule: 9:30 AM se 2:00 PM
     is_time_valid = datetime.time(9, 30) <= now_time <= datetime.time(14, 0)
     
+    # 2. Contract Selection: Next Weekly, DTE >= 3 (Skip Expiry Day & DTE 0-1)
     expiry_day = 1 if index_name == "NIFTY" else 3
     days_to_current_exp = (expiry_day - today.weekday()) % 7
     
@@ -221,8 +206,8 @@ def evaluate_user_strategy(index_name, spot_price, vix_val, strike_step, delta_t
     spot_sl_pts = 50.0 if index_name == "NIFTY" else 150.0
     
     delta = delta_target
-    prem_target_pts = round(spot_target_pts * delta, 1)
-    prem_sl_pts = round(spot_sl_pts * delta, 1)
+    prem_target_pts = round(spot_target_pts * delta, 1)  # +8 pts
+    prem_sl_pts = round(spot_sl_pts * delta, 1)          # -10 pts
     
     live_prem_est = round(expected_move * 0.22, 1)
     
@@ -331,10 +316,10 @@ with tab1:
             m3.metric("STOP-LOSS (-" + str(nr['actual_sl_pts']) + " pts)", "₹" + str(nr['sl_prem']))
             m4.metric("Spot Target / SL", "+" + str(nr['spot_target_pts']) + " / -" + str(nr['spot_sl_pts']))
             
-            st.info("🛡️ ACTIVE VERDICT: STAY IN THIS TRADE\\n\\n" +
-                    "• 15-min spot (₹" + str(nr['spot']) + ") is holding cleanly above VWAP (₹" + str(nr['vwap']) + ") and 9-EMA (₹" + str(nr['ema9']) + ").\\n" +
-                    "• 5-min RSI is " + str(nr['rsi']) + " (>60 breakout confirmed). Hold until ₹" + str(nr['target_prem']) + " target!\\n" +
-                    "• Rule: Target 1 par 75% profit book karein aur SL Cost (₹" + str(nr['live_prem']) + ") par shift karein!")
+            st.info("🛡️ ACTIVE VERDICT: STAY IN THIS TRADE")
+            st.write("• 15-min spot is holding cleanly above VWAP and 9-EMA.")
+            st.write("• 5-min RSI is > 60 breakout confirmed. Hold until Target!")
+            st.write("• Rule: Target 1 par 75% profit book karein aur SL Cost par shift karein!")
         else:
             st.info("🟡 WAIT FOR CONFIRMATION: 15-min VWAP/9EMA alignment ya 5-min RSI (60/40) cross ka wait karein.")
             
@@ -370,9 +355,9 @@ with tab2:
     r3.metric("Entry Premium", str(fav['Entry']))
     r4.metric("SL / Targets", "SL: " + str(fav['SL (-28%)']) + " | " + str(fav['Target 1 / 2']))
     
-    st.info("🛡️ ACTIVE VERDICT: " + str(fav['Active Verdict']) + "\\n\\n" +
-            "• Kyun Favourite Pick Bana: " + str(fav['Stock']) + " me intraday trend sabse strong hai (Score: " + str(fav['score']) + "/100) with 20-EMA alignment.\\n" +
-            "• Execution: Entry range " + str(fav['Entry']) + ", strict SL " + str(fav['SL (-28%)']) + ". First target par 75% profit lock karein!")
+    st.info("🛡️ ACTIVE VERDICT: " + str(fav['Active Verdict']))
+    st.write("• Kyun Favourite Pick Bana: " + str(fav['Stock']) + " me intraday trend sabse strong hai (Score: " + str(fav['score']) + "/100) with 20-EMA alignment.")
+    st.write("• Execution: Entry range " + str(fav['Entry']) + ", strict SL " + str(fav['SL (-28%)']) + ". First target par 75% profit lock karein!")
 
 # -------------------------------------------------------------
 # TAB 3: FULL F&O UNIVERSE SCANNER (12+ STOCKS)
@@ -399,23 +384,23 @@ with tab4:
     st.subheader("🎯 3-Markets Prediction Engine: Market Kahan Tak Jaa Sakta Hai?")
     p1, p2, p3 = st.columns(3)
     with p1:
-        st.info("1. Equity Indices Range\\n\\n" +
-                "• Nifty 50 Spot: ₹" + str(user_nifty) + "\\n" +
-                "• Expected Day Range: " + str(round(user_nifty - 120)) + " — " + str(round(user_nifty + 180)) + "\\n" +
-                "• Upside Breakout: " + str(round(user_nifty + 150)) + "\\n" +
-                "• Downside Support: " + str(round(user_nifty - 140)))
+        st.info("1. Equity Indices Range")
+        st.write("• Nifty 50 Spot: ₹" + str(user_nifty))
+        st.write("• Expected Day Range: " + str(round(user_nifty - 120)) + " — " + str(round(user_nifty + 180)))
+        st.write("• Upside Breakout: " + str(round(user_nifty + 150)))
+        st.write("• Downside Support: " + str(round(user_nifty - 140)))
     with p2:
-        st.info("2. F&O Market Momentum Leaders\\n\\n" +
-                "• Top Leader: " + str(fav['Stock']) + "\\n" +
-                "• TCS Live Spot: ₹2156.0\\n" +
-                "• Reliance Live Spot: ₹3020.0\\n" +
-                "• HDFC Bank Live Spot: ₹1680.0")
+        st.info("2. F&O Market Momentum Leaders")
+        st.write("• Top Leader: " + str(fav['Stock']))
+        st.write("• TCS Live Spot: ₹2156.0")
+        st.write("• Reliance Live Spot: ₹3020.0")
+        st.write("• HDFC Bank Live Spot: ₹1680.0")
     with p3:
-        st.info("3. MCX Commodities Range (INR)\\n\\n" +
-                "• MCX Crude Oil Live: ₹" + str(market['crude']) + "\\n" +
-                "• Crude Trigger > ₹8,900 gives target ₹9,120\\n" +
-                "• MCX Natural Gas Live: ₹" + str(market['ng']) + "\\n" +
-                "• NG Breakout: Buy > ₹302 / Sell < ₹292")
+        st.info("3. MCX Commodities Range (INR)")
+        st.write("• MCX Crude Oil Live: ₹" + str(market['crude']))
+        st.write("• Crude Trigger > ₹8,900 gives target ₹9,120")
+        st.write("• MCX Natural Gas Live: ₹" + str(market['ng']))
+        st.write("• NG Breakout: Buy > ₹302 / Sell < ₹292")
 
 # -------------------------------------------------------------
 # TAB 5: ACCURATE MCX COMMODITIES (INR)
@@ -424,11 +409,26 @@ with tab5:
     st.subheader("🛢️ MCX Commodity Options Analysis (Accurate Indian INR Rates)")
     col_c, col_n = st.columns(2)
     with col_c:
-        st.success("MCX CRUDE OIL 8900 CE (Live MCX Spot: ₹" + str(market['crude']) + ")\\n\\n" +
-                   "• Spot Trigger: Buy above ₹8,880\\n" +
-                   "• Option Strike: 8900 CE / 8800 PE\\n" +
-                   "• Option Entry: ₹145 — ₹155 | Strict SL: ₹110 (-25 pts)\\n" +
-                   "• Targets: T1: ₹195 | T2: ₹240\\n" +
-                   "• 🛡️ Verdict: 🟢 STAY IN TRADE (Holding above ₹8,850 support)")
+        st.success("MCX CRUDE OIL 8900 CE (Live MCX Spot: ₹" + str(market['crude']) + ")")
+        st.write("• Spot Trigger: Buy above ₹8,880")
+        st.write("• Option Strike: 8900 CE / 8800 PE")
+        st.write("• Option Entry: ₹145 — ₹155 | Strict SL: ₹110 (-25 pts)")
+        st.write("• Targets: T1: ₹195 | T2: ₹240")
+        st.write("• 🛡️ Verdict: 🟢 STAY IN TRADE (Holding above ₹8,850 support)")
     with col_n:
-        st.warning("MCX NATURAL GAS 300 CE / 290 PE (Live MCX Spot: ₹" + str(market['ng']) + ")
+        st.warning("MCX NATURAL GAS 300 CE / 290 PE (Live MCX Spot: ₹" + str(market['ng']) + ")")
+        st.write("• Triggers: Buy Spot > ₹302.00 / Sell Spot < ₹292.00")
+        st.write("• Option Strike: 300 CE / 290 PE")
+        st.write("• Spot SL: 3.5 Points | Targets: 6.0 to 9.0 Points")
+        st.write("• 🛡️ Verdict: 🟡 WAIT FOR BREAKOUT (Consolidating near ₹296)")
+
+# -------------------------------------------------------------
+# TAB 6: SWING TRADING OPTIONS
+# -------------------------------------------------------------
+with tab6:
+    st.subheader("🌊 Swing Trading Options (Positional Multi-Day)")
+    sw1, sw2 = st.columns(2)
+    with sw1:
+        st.info("NIFTY 22800 CE (Next Weekly / Monthly Expiry)")
+        st.write("• Entry: ₹140 - ₹150 | Positional SL: ₹105 (-25%)")
+        st.write("• Swing Targets: T1: ₹205 | T2: ₹2
