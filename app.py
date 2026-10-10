@@ -208,7 +208,7 @@ today = datetime.date.today()
 is_weekend = today.weekday() in [5, 6]
 
 if is_weekend:
-    st.warning(f"🏖️ **WEEKEND NOTICE (Market Closed):** Aaj Saturday/Sunday hai. National Stock Exchange band hai. Monday 09:15 AM par live ticks shuru honge. (Latest Friday Closing Prices auto-loaded).")
+    st.warning("🏖️ **WEEKEND NOTICE (Market Closed):** Aaj Saturday/Sunday hai. National Stock Exchange band hai. Monday 09:15 AM par live ticks shuru honge. (Latest Friday Closing Prices auto-loaded).")
 else:
     st.success(f"🟢 **Dynamic Scanner Live:** 12 F&O Stocks scanned across all sectors! Top Momentum Leader: **{market_data['favourite']['Stock']}** ({market_data['favourite']['Day Change']}%)")
 
@@ -275,11 +275,11 @@ with tab1:
 # -------------------------------------------------------------
 with tab2:
     fav = market_data["favourite"]
-    st.subheader(f"⭐ Aaj Ka Dynamic Favourite Pick (Auto-Detected Momentum Leader)")
+    st.subheader("⭐ Aaj Ka Dynamic Favourite Pick (Auto-Detected Momentum Leader)")
     st.caption("Pura market scan karke jis stock me sabse clean breakout aur best Risk-to-Reward mila hai wo auto-select hua hai:")
     
     with st.container():
-        st.warning(f"⭐ **TOP HIGH-CONVICTION SETUP:** {fav['Stock']} {fav['Option Strike']} ({fav['Sector']})")
+        st.warning(f"⭐ **TOP HIGH-CONVICTION SETUP:** {fav['Stock']} {fav['Option Strike']} ({fav.get('Sector', '')})")
         r1, r2, r3, r4 = st.columns(4)
         r1.metric("Live Spot Price", f"₹{fav['Live Spot']}")
         r2.metric("Day Momentum", f"{fav['Day Change']}%")
@@ -301,12 +301,14 @@ with tab3:
     st.subheader("📈 Dynamic F&O Universe Real-Time Scanner")
     st.caption("Auto-scanned across Banking, IT, Auto, Energy, and Infrastructure heavyweights:")
     
-    sectors = ["All Sectors"] + list(set([s["sector"] for s in market_data["stocks"]]))
+    # 100% Defensive Safe Sector Filtering
+    all_sectors = sorted(list(set([s.get("Sector", s.get("sector", "General")) for s in market_data["stocks"]])))
+    sectors = ["All Sectors"] + all_sectors
     selected_sector = st.selectbox("Filter By Sector", sectors)
     
     display_stocks = market_data["stocks"]
     if selected_sector != "All Sectors":
-        display_stocks = [s for s in display_stocks if s["sector"] == selected_sector]
+        display_stocks = [s for s in display_stocks if s.get("Sector", s.get("sector", "")) == selected_sector]
         
     df_fno = pd.DataFrame(display_stocks)[["Stock", "Sector", "Live Spot", "Day Change", "Trend", "Setup", "Option Strike", "Entry", "SL", "Target 1 / 2", "Active Verdict"]]
     st.dataframe(df_fno, use_container_width=True, hide_index=True)
