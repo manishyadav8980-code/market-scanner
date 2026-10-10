@@ -3,13 +3,13 @@ import pandas as pd
 import numpy as np
 import datetime
 import requests
-from bs4 import BeautifulSoup
+import re
 
-# Auto-refresh helper for continuous 10s monitoring
+# Auto-refresh helper if available (failsafe)
 try:
     from streamlit_autorefresh import st_autorefresh
     st_autorefresh(interval=10000, key="strategy_auto_tick")
-except ImportError:
+except Exception:
     pass
 
 # -------------------------------------------------------------
@@ -23,18 +23,17 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# DIRECT EXCHANGE LIVE TICK SCRAPER
+# DIRECT EXCHANGE LIVE TICK SCRAPER (NO BS4 NEEDED - STANDARD RE)
 # -------------------------------------------------------------
 def fetch_live_price_google(ticker_code, fallback):
-    url = f"https://www.google.com/finance/quote/{ticker_code}"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    url = "https://www.google.com/finance/quote/" + ticker_code
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     try:
         res = requests.get(url, headers=headers, timeout=2.0)
         if res.status_code == 200:
-            soup = BeautifulSoup(res.text, "html.parser")
-            div = soup.find("div", class_="YMlKec fxKbKc")
-            if div:
-                raw_text = div.text.replace("₹", "").replace(",", "").replace("$", "").strip()
+            match = re.search(r'class="YMlKec fxKbKc">([^<]+)<', res.text)
+            if match:
+                raw_text = match.group(1).replace("₹", "").replace(",", "").replace("$", "").strip()
                 return round(float(raw_text), 2)
     except Exception:
         pass
@@ -147,7 +146,7 @@ col_h1, col_h2 = st.columns([3, 1])
 with col_h1:
     st.title("🎯 Nifty & Sensex Scalper Pro (Exact Strategy)")
     now_str = datetime.datetime.now().strftime("%H:%M:%S")
-    st.caption("15m VWAP+9EMA Trend | 5m RSI (60/40) Trigger | 0.2 Delta Next Weekly | Auto-Refreshed: " + now_str)
+    st.caption("15m VWAP+9EMA Trend | 5m RSI (60/40) Trigger | 0.2 Delta Next Weekly | Last Sync: " + now_str)
 with col_h2:
     st.write("")
     if st.button("🔄 Force Rescan", use_container_width=True):
@@ -179,7 +178,7 @@ tab_nifty, tab_sensex, tab_rules = st.tabs([
 ])
 
 # -------------------------------------------------------------
-# TAB 1: NIFTY 50 SIGNAL CARD (100% CLEAN PYTHON - NO F-STRINGS)
+# TAB 1: NIFTY 50 SIGNAL CARD
 # -------------------------------------------------------------
 with tab_nifty:
     nr = nifty_res
@@ -223,7 +222,7 @@ with tab_nifty:
             st.info("🟡 WAIT FOR CONFIRMATION: 15-min VWAP/9EMA alignment ya 5-min RSI (60/40) cross ka wait karein.")
 
 # -------------------------------------------------------------
-# TAB 2: BSE SENSEX SIGNAL CARD (100% CLEAN PYTHON)
+# TAB 2: BSE SENSEX SIGNAL CARD
 # -------------------------------------------------------------
 with tab_sensex:
     sr = sensex_res
