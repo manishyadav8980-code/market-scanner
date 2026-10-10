@@ -431,4 +431,37 @@ with tab6:
     with sw1:
         st.info("NIFTY 22800 CE (Next Weekly / Monthly Expiry)")
         st.write("• Entry: ₹140 - ₹150 | Positional SL: ₹105 (-25%)")
-        st.write("• Swing Targets: T1: ₹205 | T2: ₹2
+        st.write("• Swing Targets: T1: ₹205 | T2: ₹270")
+        st.write("• Holding: 3 to 7 Days (Daily 21-EMA support)")
+        st.write("• 🛡️ Verdict: 🟢 POSITIONAL HOLD (DTE Safe)")
+    with sw2:
+        st.info("RELIANCE 3100 CE (Current Month Expiry)")
+        st.write("• Entry: ₹38 - ₹40 | Positional SL: ₹28 (-26%)")
+        st.write("• Swing Targets: T1: ₹58 | T2: ₹78")
+        st.write("• Holding: 5 to 10 Days (Breakout above ₹3,025)")
+        st.write("• 🛡️ Verdict: 🟢 POSITIONAL HOLD")
+
+# -------------------------------------------------------------
+# TAB 7: STRATEGY RULES & SL TRACKER
+# -------------------------------------------------------------
+with tab7:
+    st.subheader("📜 Aapki Strategy Ke Fixed Rules")
+    st.write("1. 15-Min Spot Filter: Price > VWAP & 9-EMA -> Sirf CE; Price < VWAP & 9-EMA -> Sirf PE.")
+    st.write("2. 5-Min Spot Trigger: RSI > 60 -> CE Trigger; RSI < 40 -> PE Trigger.")
+    st.write("3. Time Window: 9:30 AM se 2:00 PM ke beech me hi entry allow hai.")
+    st.write("4. Contract Selection: Next Weekly Contract (DTE >= 3), 0.2 Delta OTM. Expiry day & DTE 0-1 skip.")
+    st.write("5. Option Target & SL Math: Spot Target 40 -> Option +8 pts; Spot SL 50 -> Option -10 pts (max 28% cap).")
+    st.write("6. Daily Discipline: Din mein Max 2 SL, uske baad trading strictly band!")
+    
+    st.markdown("---")
+    st.subheader("🛡️ Daily SL Tracker (Max 2 SL)")
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        st.metric("Aaj Kitne SL Hit Hue?", str(st.session_state['sl_count']) + " / 2")
+    with col_t2:
+        if st.button("🔴 Record SL Hit (+1)", use_container_width=True):
+            st.session_state['sl_count'] += 1
+            st.rerun()
+        if st.button("🔄 Reset Daily SL Counter", use_container_width=True):
+            st.session_state['sl_count'] = 0
+            st.rerun()
